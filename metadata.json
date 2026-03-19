@@ -1,0 +1,5 @@
+{
+  "name": "OT Clinical Assistant (EPTO)",
+  "description": "A clinical decision support tool for Occupational Therapists based on the OTPF-4 (EPTO) framework.",
+  "requestFramePermissions": []
+}
