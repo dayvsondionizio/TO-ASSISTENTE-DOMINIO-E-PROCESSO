@@ -27,7 +27,8 @@ import {
   User as UserIcon,
   Sun,
   Moon,
-  Download
+  Download,
+  BookOpenCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getClinicalResponse } from './services/geminiService';
@@ -206,26 +207,31 @@ export default function App() {
     setIsLoading(true);
     try {
       const element = resultRef.current;
-      
-      // html-to-image lida melhor com oklch e CSS moderno do que html2canvas
-      const dataUrl = await htmlToImage.toPng(element, {
-        quality: 1.0,
-        pixelRatio: 2,
+      const canvas = await htmlToImage.toCanvas(element, {
         backgroundColor: theme === 'dark' ? '#111114' : '#ffffff',
+        pixelRatio: 2,
       });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
       
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'px',
-        format: 'a4'
-      });
-      
-      const imgProps = pdf.getImageProperties(dataUrl);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      
-      pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`analise-clinica-${new Date().getTime()}.pdf`);
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`analise-dominio-processo-${new Date().getTime()}.pdf`);
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       alert('Erro ao gerar PDF. Tente novamente.');
@@ -294,10 +300,15 @@ export default function App() {
       >
         <div className="p-6 flex items-center justify-between">
           <div className={`flex items-center gap-3 ${!isSidebarOpen && 'hidden'}`}>
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-              <Stethoscope size={18} className="text-white" />
+            <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden flex items-center justify-center border border-slate-200 dark:border-slate-800 shadow-sm">
+              <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
             </div>
-            <h1 className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">Assistente TO</h1>
+            <div>
+              <h1 className="font-black text-sm leading-tight tracking-tight text-slate-900 dark:text-white uppercase">
+                Domínio e Processo <span className="text-orange-600">Assist</span>
+              </h1>
+              <p className="text-[9px] text-slate-500 font-bold tracking-widest uppercase">OTPF-4 Specialist</p>
+            </div>
           </div>
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400">
             {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
@@ -325,8 +336,8 @@ export default function App() {
             </div>
             {isSidebarOpen && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">Assistente TO</p>
-                <p className="text-xs text-slate-500 truncate">Sessão Ativa (Modo Off-line)</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">D.P. Assist</p>
+                <p className="text-xs text-slate-500 truncate">Sessão Ativa</p>
               </div>
             )}
           </div>
@@ -554,9 +565,9 @@ export default function App() {
                           <p className="text-slate-500 dark:text-slate-400 font-medium">Carregando mapa mental...</p>
                         </div>
                       ) : (
-                        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8 min-h-[600px]">
+                        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8 h-full min-h-[700px]">
                           {/* Mind Map Visualization */}
-                          <div className="bg-white dark:bg-[#111114] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 overflow-auto">
+                          <div className="bg-white dark:bg-[#111114] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 overflow-auto shadow-sm h-[500px] lg:h-auto">
                             <MindMapNode 
                               node={mindMapData} 
                               onNodeClick={(page) => {
@@ -573,7 +584,7 @@ export default function App() {
                           </div>
 
                           {/* PDF Viewer */}
-                          <div className="bg-slate-900 rounded-3xl overflow-hidden border border-slate-800 relative group">
+                          <div className="bg-slate-900 rounded-3xl overflow-hidden border border-slate-800 relative group h-[600px] lg:h-auto shadow-2xl">
                             {pdfUrl ? (
                               <>
                                 <iframe 
