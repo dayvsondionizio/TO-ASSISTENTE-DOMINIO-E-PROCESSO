@@ -28,7 +28,9 @@ import {
   Sun,
   Moon,
   Download,
-  BookOpenCheck
+  BookOpenCheck,
+  Mic,
+  MicOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getClinicalResponse } from './services/geminiService';
@@ -71,6 +73,8 @@ export default function App() {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [mindMapData] = useState<any>(STATIC_MIND_MAP);
   const [isGeneratingMindMap] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef<any>(null);
 
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
@@ -256,6 +260,49 @@ export default function App() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      alert("Seu navegador não suporta reconhecimento de voz.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'pt-BR';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onstart = () => setIsRecording(true);
+    recognition.onend = () => setIsRecording(false);
+    recognition.onerror = (event: any) => {
+      console.error("Erro no reconhecimento de voz:", event.error);
+      setIsRecording(false);
+    };
+
+    recognition.onresult = (event: any) => {
+      let finalTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        }
+      }
+      
+      if (finalTranscript) {
+        setAnalysisInput(prev => prev ? `${prev} ${finalTranscript}` : finalTranscript);
+      }
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
   };
 
   const resetResult = () => setResult(null);
@@ -713,12 +760,25 @@ export default function App() {
                         <p className="text-slate-500 dark:text-slate-400">Insira uma atividade para analisar suas demandas e competências de desempenho.</p>
                       </div>
                       <div className="bg-white dark:bg-[#111114] border border-slate-200 dark:border-slate-800 rounded-2xl p-8 space-y-6">
-                        <textarea 
-                          value={analysisInput}
-                          onChange={(e) => setAnalysisInput(e.target.value)}
-                          placeholder="Descreva a atividade (ex: 'Escovar os dentes em pé na pia')"
-                          className="w-full bg-slate-50 dark:bg-[#0a0a0c] border border-slate-200 dark:border-slate-800 rounded-xl p-4 h-40 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all resize-none dark:text-white"
-                        />
+                        <div className="relative">
+                          <textarea 
+                            value={analysisInput}
+                            onChange={(e) => setAnalysisInput(e.target.value)}
+                            placeholder="Descreva a atividade (ex: 'Escovar os dentes em pé na pia')"
+                            className="w-full bg-slate-50 dark:bg-[#0a0a0c] border border-slate-200 dark:border-slate-800 rounded-xl p-4 h-40 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all resize-none dark:text-white"
+                          />
+                          <button
+                            onClick={toggleRecording}
+                            className={`absolute right-4 bottom-4 p-3 rounded-xl transition-all duration-300 ${
+                              isRecording 
+                                ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/40' 
+                                : 'bg-blue-600/10 text-blue-600 hover:bg-blue-600 hover:text-white dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500 dark:hover:text-white'
+                            }`}
+                            title={isRecording ? "Parar Gravação" : "Falar para Transcrever"}
+                          >
+                            {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
+                          </button>
+                        </div>
                         <button 
                           onClick={handleAnalysis}
                           disabled={isLoading}
