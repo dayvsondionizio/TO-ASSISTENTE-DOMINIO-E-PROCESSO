@@ -262,13 +262,7 @@ export default function App() {
     }
   };
 
-  const toggleRecording = () => {
-    if (isRecording) {
-      recognitionRef.current?.stop();
-      setIsRecording(false);
-      return;
-    }
-
+  const startRecording = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     
     if (!SpeechRecognition) {
@@ -316,6 +310,13 @@ export default function App() {
 
     recognitionRef.current = recognition;
     recognition.start();
+  };
+
+  const stopRecording = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+    }
   };
 
   const resetResult = () => setResult(null);
@@ -781,16 +782,20 @@ export default function App() {
                             className="w-full bg-slate-50 dark:bg-[#0a0a0c] border border-slate-200 dark:border-slate-800 rounded-xl p-4 h-40 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all resize-none dark:text-white"
                           />
                           <button
-                            onClick={toggleRecording}
-                            className={`absolute right-4 bottom-4 p-3 rounded-xl transition-all duration-300 flex items-center gap-2 ${
+                            onMouseDown={startRecording}
+                            onMouseUp={stopRecording}
+                            onMouseLeave={stopRecording}
+                            onTouchStart={(e) => { e.preventDefault(); startRecording(); }}
+                            onTouchEnd={(e) => { e.preventDefault(); stopRecording(); }}
+                            className={`absolute right-4 bottom-4 p-3 rounded-xl transition-all duration-300 flex items-center gap-2 select-none touch-none ${
                               isRecording 
-                                ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/40' 
+                                ? 'bg-red-500 text-white scale-110 shadow-lg shadow-red-500/40' 
                                 : 'bg-blue-600/10 text-blue-600 hover:bg-blue-600 hover:text-white dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500 dark:hover:text-white'
                             }`}
-                            title={isRecording ? "Parar Gravação" : "Falar para Transcrever"}
+                            title="Mantenha pressionado para falar"
                           >
-                            {isRecording && <span className="text-[10px] font-bold uppercase tracking-wider animate-pulse">Gravando...</span>}
-                            {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
+                            {isRecording && <span className="text-[10px] font-bold uppercase tracking-wider">Solte para finalizar</span>}
+                            {isRecording ? <Mic size={20} className="animate-pulse" /> : <Mic size={20} />}
                           </button>
                         </div>
                         <button 
