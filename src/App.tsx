@@ -289,15 +289,28 @@ export default function App() {
     };
 
     recognition.onresult = (event: any) => {
+      let interimTranscript = '';
       let finalTranscript = '';
+
       for (let i = event.resultIndex; i < event.results.length; ++i) {
+        const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
         }
       }
       
       if (finalTranscript) {
-        setAnalysisInput(prev => prev ? `${prev} ${finalTranscript}` : finalTranscript);
+        setAnalysisInput(prev => {
+          const clean = prev.replace(/\.\.\. \(escutando\)$/, '');
+          return clean ? `${clean} ${finalTranscript}` : finalTranscript;
+        });
+      } else if (interimTranscript) {
+        setAnalysisInput(prev => {
+          const clean = prev.replace(/\.\.\. \(escutando\)$/, '');
+          return `${clean}... (escutando)`;
+        });
       }
     };
 
@@ -769,13 +782,14 @@ export default function App() {
                           />
                           <button
                             onClick={toggleRecording}
-                            className={`absolute right-4 bottom-4 p-3 rounded-xl transition-all duration-300 ${
+                            className={`absolute right-4 bottom-4 p-3 rounded-xl transition-all duration-300 flex items-center gap-2 ${
                               isRecording 
                                 ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/40' 
                                 : 'bg-blue-600/10 text-blue-600 hover:bg-blue-600 hover:text-white dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500 dark:hover:text-white'
                             }`}
                             title={isRecording ? "Parar Gravação" : "Falar para Transcrever"}
                           >
+                            {isRecording && <span className="text-[10px] font-bold uppercase tracking-wider animate-pulse">Gravando...</span>}
                             {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
                           </button>
                         </div>
