@@ -34,7 +34,7 @@ export const DOMAIN_SECTIONS: OTPFSection[] = [
   {
     title: 'Competências de Desempenho',
     description: 'Ações observáveis e direcionadas a objetivos que resultam na qualidade do desempenho do cliente em ocupações desejadas.',
-    items: ['Habilidades Motoras', 'Habilidades de Processo', 'Habilidades de Interação Social']
+    items: ['Competências Motoras', 'Competências de Processo', 'Competência de Interação Social']
   },
   {
     title: 'Fatores do Cliente',

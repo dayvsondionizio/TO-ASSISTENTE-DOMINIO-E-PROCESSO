@@ -693,7 +693,7 @@ export default function App() {
                           type="text"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          placeholder="ex: Quais são as habilidades de desempenho envolvidas na interação social?"
+                          placeholder="ex: Quais são as competências de desempenho envolvidas na interação social?"
                           className="w-full bg-white dark:bg-[#111114] border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-5 pr-16 text-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all dark:text-white"
                         />
                         <button 
@@ -710,7 +710,7 @@ export default function App() {
                     <div className="space-y-8">
                       <div className="space-y-2">
                         <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Análise de Atividade</h2>
-                        <p className="text-slate-500 dark:text-slate-400">Insira uma atividade para analisar suas demandas e habilidades de desempenho.</p>
+                        <p className="text-slate-500 dark:text-slate-400">Insira uma atividade para analisar suas demandas e competências de desempenho.</p>
                       </div>
                       <div className="bg-white dark:bg-[#111114] border border-slate-200 dark:border-slate-800 rounded-2xl p-8 space-y-6">
                         <textarea 
